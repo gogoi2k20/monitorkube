@@ -1,16 +1,26 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/gaurav2k20/monitorkube/internal/app"
+	"github.com/gaurav2k20/monitorkube/internal/config"
 	"github.com/gaurav2k20/monitorkube/internal/logger"
 )
 
 func main() {
 	log := logger.New()
+	cfg := config.Load()
 
-	app := app.New(log)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	if err := app.Run(); err != nil {
-		log.Error("Application exited", "error", err)
+	a := app.New(cfg, log)
+	if err := a.Run(ctx); err != nil {
+		log.Error("Application exited with error", "error", err)
+		os.Exit(1)
 	}
 }

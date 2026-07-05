@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitorkube
+  namespace: monitoring
+  labels:
+    app: monitorkube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monitorkube
+  template:
+    metadata:
+      labels:
+        app: monitorkube
+      annotations:
+        # MonitorKube scrapes itself too, why not - remove if you'd
+        # rather rely purely on the ServiceMonitor below.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9469"
+    spec:
+      serviceAccountName: monitorkube
+      containers:
+        - name: monitorkube
+          image: monitorkube:dev # build locally: docker build -t monitorkube:dev .
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9469
+          env:
+            - name: CLUSTER_NAME
+              value: "prod-us-east-1" # set per-cluster; this is what lets you tell clusters apart in one VictoriaMetrics
+            - name: PROBE_INTERVAL
+              value: "15s"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monitorkube
+  namespace: monitoring
+  labels:
+    app: monitorkube
+spec:
+  selector:
+    app: monitorkube
+  ports:
+    - name: metrics
+      port: 9469
+      targetPort: metrics

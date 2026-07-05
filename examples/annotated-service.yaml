@@ -1,0 +1,19 @@
+# This is all it takes to opt a service into MonitorKube's discovery —
+# no separate Blackbox Exporter target list to maintain, no Probe CRD
+# to hand-write per service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+  namespace: default
+  annotations:
+    monitorkube.io/probe: "true" # required: opts this service in
+    monitorkube.io/path: "/healthz" # optional, defaults to /healthz
+    monitorkube.io/port: "8080" # optional, defaults to the service's first port
+    monitorkube.io/scheme: "http" # optional, defaults to http
+spec:
+  selector:
+    app: my-app
+  ports:
+    - port: 8080
+      targetPort: 8080

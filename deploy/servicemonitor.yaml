@@ -1,0 +1,16 @@
+# Only needed if you're running Prometheus Operator / kube-prometheus-stack.
+# If you're scraping straight from vmagent or Prometheus config instead,
+# just point a scrape job at monitorkube.monitoring.svc:9469/metrics.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitorkube
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: monitorkube
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
